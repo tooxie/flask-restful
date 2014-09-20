@@ -29,6 +29,14 @@ def is_indexable_but_not_string(obj):
     return not hasattr(obj, "strip") and hasattr(obj, "__iter__")
 
 
+def get_attr(self, key, attribute, data):
+    attr = key
+    if attribute is not None:
+        attr = self.attribute, obj
+
+    return attr
+
+
 def get_value(key, obj, default=None):
     """Helper for pulling a keyed value off various types of objects"""
     if type(key) == int:
@@ -81,8 +89,8 @@ class Raw(object):
         self.default = default
 
     def format(self, value):
-        """Formats a field's value. No-op by default - field classes that 
-        modify how the value of existing object keys should be presented should 
+        """Formats a field's value. No-op by default - field classes that
+        modify how the value of existing object keys should be presented should
         override this and apply the appropriate formatting.
 
         :param value: The value to format
@@ -98,15 +106,15 @@ class Raw(object):
 
     def output(self, key, obj):
         """Pulls the value for the given key from the object, applies the
-        field's formatting and returns the result. If the key is not found 
-        in the object, returns the default value. Field classes that create 
-        values which do not require the existence of the key in the object 
+        field's formatting and returns the result. If the key is not found
+        in the object, returns the default value. Field classes that create
+        values which do not require the existence of the key in the object
         should override this and return the desired value.
-        
+
         :exception MarshallingException: In case of formatting problem
         """
 
-        value = get_value(key if self.attribute is None else self.attribute, obj)
+        value = get_value(get_attr(key, self.attribute, obj))
 
         if value is None:
             return self.default
@@ -129,7 +137,8 @@ class Nested(Raw):
         super(Nested, self).__init__(**kwargs)
 
     def output(self, key, obj):
-        value = get_value(key if self.attribute is None else self.attribute, obj)
+        value = get_value(get_attr(key, self.attribute, obj))
+
         if self.allow_null and value is None:
             return None
 
@@ -165,7 +174,7 @@ class List(Raw):
         ]
 
     def output(self, key, data):
-        value = get_value(key if self.attribute is None else self.attribute, data)
+        value = get_value(get_attr(key, self.attribute, data))
         # we cannot really test for external dict behavior
         if is_indexable_but_not_string(value) and not isinstance(value, dict):
             return self.format(value)

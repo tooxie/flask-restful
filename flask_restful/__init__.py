@@ -1,19 +1,21 @@
 from __future__ import absolute_import
-import difflib
 from functools import wraps, partial
+from types import MethodType
+import difflib
 import re
-from flask import request, url_for, current_app
+import sys
+
 from flask import abort as original_flask_abort
-from flask.views import MethodView
+from flask import request, url_for, current_app
+from flask.helpers import _endpoint_from_view_func
 from flask.signals import got_request_exception
+from flask.views import MethodView
 from werkzeug.exceptions import HTTPException, MethodNotAllowed, NotFound
 from werkzeug.http import HTTP_STATUS_CODES
 from werkzeug.wrappers import Response as ResponseBase
-from flask.ext.restful.utils import error_data, unpack
+
 from flask.ext.restful.representations.json import output_json
-import sys
-from flask.helpers import _endpoint_from_view_func
-from types import MethodType
+from flask.ext.restful.utils import error_data, unpack
 
 try:
     #noinspection PyUnresolvedReferences
@@ -21,7 +23,8 @@ try:
 except ImportError:
     from .utils.ordereddict import OrderedDict
 
-__all__ = ('Api', 'Resource', 'marshal', 'marshal_with', 'marshal_with_field', 'abort')
+__all__ = ('Api', 'Resource', 'marshal', 'marshal_with', 'marshal_with_field',
+           'abort')
 
 
 def abort(http_status_code, **kwargs):
@@ -132,7 +135,9 @@ class Api(object):
         return ''.join(parts[key] for key in self.url_part_order if parts[key])
 
     @staticmethod
-    def _blueprint_setup_add_url_rule_patch(blueprint_setup, rule, endpoint=None, view_func=None, **options):
+    def _blueprint_setup_add_url_rule_patch(blueprint_setup, rule,
+                                            endpoint=None, view_func=None,
+                                            **options):
         """Method used to patch BlueprintSetupState.add_url_rule for setup
         state instance corresponding to this Api instance.  Exists primarily
         to enable _complete_url's function.
